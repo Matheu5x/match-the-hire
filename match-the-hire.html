@@ -1,0 +1,679 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Match the Hire</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@500;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --ink:#151a23;
+    --ink-2:#1d2430;
+    --paper:#ece3cd;
+    --paper-2:#ddd0ac;
+    --pencil:#241d10;
+    --amber:#d98b2b;
+    --stamp-green:#2f7c6e;
+    --stamp-red:#b23a2e;
+    --line: rgba(236,227,205,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:
+      radial-gradient(circle at 15% 10%, rgba(217,139,43,0.08), transparent 45%),
+      repeating-linear-gradient(0deg, rgba(255,255,255,0.015) 0px, rgba(255,255,255,0.015) 1px, transparent 1px, transparent 3px),
+      var(--ink);
+    color:var(--paper);
+    font-family:'IBM Plex Mono', monospace;
+    min-height:100vh;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:24px 14px;
+  }
+  .stage{
+    width:100%;
+    max-width:640px;
+  }
+  .eyebrow{
+    font-size:11px;
+    letter-spacing:0.28em;
+    text-transform:uppercase;
+    color:var(--amber);
+    margin:0 0 8px 0;
+    text-align:center;
+  }
+  h1.title{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    font-size:clamp(32px, 7vw, 48px);
+    margin:0 0 6px 0;
+    text-align:center;
+    color:var(--paper);
+  }
+  .subtitle{
+    text-align:center;
+    color:rgba(236,227,205,0.65);
+    font-size:13px;
+    max-width:440px;
+    margin:0 auto 28px auto;
+    line-height:1.6;
+  }
+  .panel{
+    background:var(--ink-2);
+    border:1px solid var(--line);
+    border-radius:4px;
+    padding:28px 20px;
+    position:relative;
+  }
+  .panel::before{
+    content:"";
+    position:absolute;
+    top:0; left:22px; right:22px;
+    height:1px;
+    background:var(--line);
+  }
+  /* --- INTRO --- */
+  #intro-screen{ text-align:center; }
+  .rules{
+    text-align:left;
+    max-width:380px;
+    margin:0 auto 26px auto;
+    font-size:12.5px;
+    color:rgba(236,227,205,0.75);
+    line-height:1.9;
+  }
+  .rules b{color:var(--amber); font-weight:600;}
+  button.cta{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    font-size:15px;
+    background:var(--amber);
+    color:var(--ink);
+    border:none;
+    padding:14px 34px;
+    border-radius:2px;
+    cursor:pointer;
+    transition:transform 0.15s ease, background 0.15s ease;
+  }
+  button.cta:hover{ background:#e8a03f; }
+  button.cta:active{ transform:scale(0.97); }
+  button.cta:focus-visible{ outline:3px solid var(--paper); outline-offset:3px; }
+
+  /* --- GAME --- */
+  #game-screen{ display:none; }
+  .hud{
+    display:flex;
+    justify-content:space-between;
+    align-items:baseline;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:rgba(236,227,205,0.6);
+    margin-bottom:10px;
+  }
+  .hud .score-num, .hud .time-num{
+    color:var(--paper);
+    font-size:16px;
+    font-weight:600;
+  }
+  .timer-track{
+    width:100%;
+    height:6px;
+    background:rgba(236,227,205,0.1);
+    border-radius:3px;
+    overflow:hidden;
+    margin-bottom:22px;
+  }
+  .timer-fill{
+    height:100%;
+    background:var(--amber);
+    width:100%;
+    transition:width 1s linear, background 0.3s ease;
+  }
+  .candidate-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:14px;
+    margin-bottom:24px;
+    min-height:130px;
+    perspective:600px;
+  }
+  .side-counter{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    width:64px;
+    flex:0 0 auto;
+  }
+  .counter-label{
+    font-size:9.5px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:rgba(236,227,205,0.45);
+    margin-bottom:4px;
+  }
+  .counter-num{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:30px;
+    line-height:1;
+    transition:color 0.2s ease;
+  }
+  .side-counter.chances .counter-num{ color:var(--stamp-red); }
+  .side-counter.correct .counter-num{ color:var(--stamp-green); }
+  .counter-num.pulse{ animation:counterPulse 0.4s ease-out; }
+  @keyframes counterPulse{
+    0%{ transform:scale(1.55); }
+    100%{ transform:scale(1); }
+  }
+  .candidate-card{
+    background:var(--paper);
+    color:var(--pencil);
+    width:230px;
+    padding:18px 16px 16px 16px;
+    border-radius:3px;
+    box-shadow:0 10px 24px rgba(0,0,0,0.35), 0 1px 0 var(--paper-2) inset;
+    transform:rotate(-1.2deg);
+    position:relative;
+    transition:transform 0.15s ease, opacity 0.15s ease;
+  }
+  .candidate-card .file-no{
+    font-size:10px;
+    letter-spacing:0.1em;
+    color:#8a7a52;
+    margin-bottom:6px;
+  }
+  .candidate-card .cand-name{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:19px;
+    text-transform:uppercase;
+    margin-bottom:10px;
+  }
+  .tag-row{ display:flex; gap:6px; flex-wrap:wrap; }
+  .tag{
+    background:var(--pencil);
+    color:var(--paper);
+    font-size:10.5px;
+    letter-spacing:0.04em;
+    padding:4px 8px;
+    border-radius:2px;
+  }
+  .stamp{
+    position:absolute;
+    top:38%;
+    left:50%;
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:26px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:6px 14px;
+    border:4px solid currentColor;
+    border-radius:6px;
+    opacity:0;
+    pointer-events:none;
+    transform:translate(-50%,-50%) rotate(-14deg) scale(1.6);
+  }
+  .stamp.show{
+    animation:stampIn 0.5s ease-out forwards;
+  }
+  @keyframes stampIn{
+    0%{ opacity:0; transform:translate(-50%,-50%) rotate(-14deg) scale(2.2); }
+    60%{ opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(0.92); }
+    100%{ opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1); }
+  }
+  .stamp.match{ color:var(--stamp-green); }
+  .stamp.miss{ color:var(--stamp-red); }
+
+  .folders{
+    display:grid;
+    grid-template-columns:repeat(2, 1fr);
+    gap:10px;
+  }
+  @media (min-width:480px){
+    .folders{ grid-template-columns:repeat(3, 1fr); }
+  }
+  .folder-btn{
+    font-family:'IBM Plex Mono', monospace;
+    background:var(--ink);
+    border:1px solid var(--line);
+    color:var(--paper);
+    border-radius:3px;
+    padding:12px 10px;
+    text-align:left;
+    cursor:pointer;
+    transition:border-color 0.15s ease, transform 0.1s ease, background 0.15s ease;
+    min-height:64px;
+  }
+  .folder-btn:hover{ border-color:var(--amber); }
+  .folder-btn:active{ transform:scale(0.98); }
+  .folder-btn:focus-visible{ outline:2px solid var(--amber); outline-offset:2px; }
+  .folder-btn.wrong-flash{
+    animation:folderShake 0.35s ease;
+    border-color:var(--stamp-red);
+  }
+  @keyframes folderShake{
+    0%{ transform:translateX(0); }
+    25%{ transform:translateX(-4px); }
+    50%{ transform:translateX(4px); }
+    75%{ transform:translateX(-2px); }
+    100%{ transform:translateX(0); }
+  }
+  .folder-title{
+    font-weight:600;
+    font-size:12.5px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+    margin-bottom:5px;
+    color:var(--paper);
+  }
+  .folder-tags{
+    font-size:10px;
+    color:rgba(236,227,205,0.5);
+    letter-spacing:0.02em;
+  }
+  .tag-unknown{
+    color:rgba(236,227,205,0.28);
+    letter-spacing:0.14em;
+  }
+
+  /* --- END SCREEN --- */
+  #end-screen{ display:none; text-align:center; }
+  .end-stamp{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+    color:var(--amber);
+    font-size:13px;
+    margin-bottom:6px;
+  }
+  .end-score{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:44px;
+    margin-bottom:4px;
+  }
+  .end-sub{
+    font-size:12px;
+    color:rgba(236,227,205,0.6);
+    margin-bottom:26px;
+  }
+  .reveal-card{
+    background:var(--paper);
+    color:var(--pencil);
+    border-radius:4px;
+    padding:22px 20px;
+    text-align:left;
+    max-width:400px;
+    margin:0 auto 22px auto;
+    box-shadow:0 10px 26px rgba(0,0,0,0.35);
+  }
+  .reveal-card .file-no{ font-size:10px; letter-spacing:0.1em; color:#8a7a52; margin-bottom:8px;}
+  .reveal-card .reveal-name{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size:22px;
+    text-transform:uppercase;
+    margin-bottom:6px;
+  }
+  .reveal-card .reveal-role{
+    font-size:12.5px;
+    color:#4a3f26;
+    margin-bottom:14px;
+  }
+  .reveal-card .reveal-blurb{
+    font-size:12.5px;
+    line-height:1.7;
+    color:var(--pencil);
+    margin-bottom:16px;
+  }
+  .cta-row{
+    display:flex;
+    gap:10px;
+    flex-wrap:wrap;
+  }
+  .cta-row a{
+    font-family:'IBM Plex Mono', monospace;
+    font-size:12px;
+    font-weight:600;
+    text-decoration:none;
+    color:var(--paper);
+    background:var(--pencil);
+    padding:9px 14px;
+    border-radius:2px;
+  }
+  .cta-row a:hover{ background:#3a2f1c; }
+  .role-highlight{ color:var(--stamp-green); font-weight:700; }
+
+  .replay-btn{
+    margin-top:6px;
+    background:none;
+    border:1px solid var(--line);
+    color:rgba(236,227,205,0.7);
+    font-family:'IBM Plex Mono', monospace;
+    font-size:11.5px;
+    padding:9px 18px;
+    border-radius:2px;
+    cursor:pointer;
+  }
+  .replay-btn:hover{ border-color:var(--amber); color:var(--paper); }
+
+  .sr-only{
+    position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+    overflow:hidden; clip:rect(0,0,0,0); white-space:nowrap; border:0;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .stamp.show{ animation:none; opacity:1; transform:translate(-50%,-50%) rotate(-10deg) scale(1); }
+    .counter-num.pulse{ animation:none; }
+    .folder-btn.wrong-flash{ animation:none; }
+    *{ transition:none !important; }
+  }
+</style>
+</head>
+<body>
+<div class="stage">
+  <p class="eyebrow">Candidate Sorting Desk</p>
+  <h1 class="title">Match the Hire</h1>
+  <p class="subtitle">Sixty seconds. Sort each candidate into the role their skills actually fit. Speed and accuracy both count.</p>
+
+  <div class="panel">
+    <!-- INTRO -->
+    <div id="intro-screen">
+      <div class="rules">
+        <div><b>01</b> — A candidate file appears with three skill tags.</div>
+        <div><b>02</b> — Roles start unknown. Click a role to guess.</div>
+        <div><b>03</b> — 3 chances per file. Wrong guesses reveal nothing and cost a chance, not points.</div>
+        <div><b>04</b> — Correct guesses reveal a role's traits for good, and your Correct count climbs.</div>
+        <div><b>05</b> — Clear as many files as you can in 60 seconds.</div>
+      </div>
+      <button class="cta" id="start-btn">Start Sorting</button>
+    </div>
+
+    <!-- GAME -->
+    <div id="game-screen">
+      <div class="hud">
+        <span>Score: <span class="score-num" id="score-num">0</span></span>
+        <span>Time: <span class="time-num" id="time-num">60</span>s</span>
+      </div>
+      <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+
+      <div class="candidate-wrap">
+        <div class="side-counter chances">
+          <div class="counter-label">Chances</div>
+          <div class="counter-num" id="chances-num">3</div>
+        </div>
+
+        <div class="candidate-card" id="candidate-card">
+          <div class="file-no" id="file-no">FILE #001</div>
+          <div class="cand-name" id="cand-name">—</div>
+          <div class="tag-row" id="cand-tags"></div>
+          <div class="stamp" id="stamp">MATCHED</div>
+        </div>
+
+        <div class="side-counter correct">
+          <div class="counter-label">Correct</div>
+          <div class="counter-num" id="correct-num">0</div>
+        </div>
+      </div>
+
+      <div class="folders" id="folders"></div>
+      <div class="sr-only" aria-live="polite" id="live-region"></div>
+    </div>
+
+    <!-- END -->
+    <div id="end-screen">
+      <p class="end-stamp">Time's Up</p>
+      <div class="end-score" id="end-score">0</div>
+      <p class="end-sub" id="end-sub">candidates correctly matched</p>
+
+      <div class="reveal-card">
+        <div class="file-no">BONUS FILE: THE ONE THAT BUILT THIS</div>
+        <div class="reveal-name">John Palacios</div>
+        <div class="reveal-role">MS Computer Science, in progress · Python · Data Science</div>
+        <div class="reveal-blurb">
+          Nice reflexes — but can you match me? I built this, and I'm currently looking for
+          <span class="role-highlight">Data Analyst / Software Engineer</span> roles. Open to a real conversation — not another auto-reply.
+        </div>
+        <div class="cta-row">
+          <a href="mailto:EDITME@example.com">Email Me</a>
+          <a href="https://www.linkedin.com/in/EDIT-ME" target="_blank" rel="noopener">LinkedIn</a>
+          <a href="https://github.com/EDIT-ME" target="_blank" rel="noopener">GitHub</a>
+        </div>
+      </div>
+
+      <button class="replay-btn" id="replay-btn">Play Again</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  const roles = [
+    { id:'ds', title:'Data Scientist', tags:['Statistics','Modeling','Experimentation'] },
+    { id:'mle', title:'ML Engineer', tags:['Deployment','Pipelines','Inference'] },
+    { id:'ba', title:'Business Analyst', tags:['Dashboards','Stakeholders','Forecasting'] },
+    { id:'qr', title:'Quant Researcher', tags:['Probability','Trading','Backtesting'] },
+    { id:'de', title:'Data Engineer', tags:['ETL','Cloud','Warehousing'] },
+  ];
+
+  const namesPool = [
+    "J. Alvarez","R. Chen","M. Okafor","S. Novak","T. Iyer","P. Larsen",
+    "K. Morrow","D. Vance","A. Petrova","E. Nakashima","L. Fischer","B. Kowalski",
+    "N. Osei","C. Whitfield","V. Romero"
+  ];
+
+  function buildCandidatePool(){
+    const pool = [];
+    roles.forEach(role=>{
+      // 3 candidates per role, each carrying that role's two matching tags
+      for(let i=0;i<3;i++){
+        pool.push({ roleId: role.id, tags: role.tags.slice() });
+      }
+    });
+    // shuffle
+    for(let i=pool.length-1;i>0;i--){
+      const j = Math.floor(Math.random()*(i+1));
+      [pool[i],pool[j]] = [pool[j],pool[i]];
+    }
+    return pool;
+  }
+
+  let deck = [];
+  let deckIndex = 0;
+  let usedNames = [];
+  let score = 0;
+  let livesLeft = 3;
+  let fileCount = 0;
+  let timeLeft = 60;
+  let timerId = null;
+  let currentCandidate = null;
+  let locked = false;
+
+  const introScreen = document.getElementById('intro-screen');
+  const gameScreen = document.getElementById('game-screen');
+  const endScreen = document.getElementById('end-screen');
+  const startBtn = document.getElementById('start-btn');
+  const replayBtn = document.getElementById('replay-btn');
+  const scoreNum = document.getElementById('score-num');
+  const timeNum = document.getElementById('time-num');
+  const timerFill = document.getElementById('timer-fill');
+  const candName = document.getElementById('cand-name');
+  const candTags = document.getElementById('cand-tags');
+  const fileNo = document.getElementById('file-no');
+  const stampEl = document.getElementById('stamp');
+  const chancesNum = document.getElementById('chances-num');
+  const correctNum = document.getElementById('correct-num');
+  const foldersEl = document.getElementById('folders');
+  const endScoreEl = document.getElementById('end-score');
+  const liveRegion = document.getElementById('live-region');
+
+  function randomName(){
+    if(usedNames.length === namesPool.length) usedNames = [];
+    let name;
+    do{ name = namesPool[Math.floor(Math.random()*namesPool.length)]; }
+    while(usedNames.includes(name));
+    usedNames.push(name);
+    return name;
+  }
+
+  function folderTagsHTML(role){
+    const known = role.tags.slice(0, role.revealed);
+    const unknownCount = role.tags.length - known.length;
+    let html = known.join(' · ');
+    if(unknownCount > 0){
+      html += (known.length ? ' · ' : '') + '<span class="tag-unknown">' + '? '.repeat(unknownCount).trim() + '</span>';
+    }
+    return html;
+  }
+
+  function renderFolders(){
+    foldersEl.innerHTML = '';
+    roles.forEach(role=>{
+      const btn = document.createElement('button');
+      btn.className = 'folder-btn';
+      btn.type = 'button';
+      btn.setAttribute('data-role', role.id);
+      btn.innerHTML = `<div class="folder-title">${role.title}</div><div class="folder-tags" id="folder-tags-${role.id}">${folderTagsHTML(role)}</div>`;
+      btn.addEventListener('click', ()=> handleChoice(role.id));
+      foldersEl.appendChild(btn);
+    });
+  }
+
+  function refreshFolderTags(roleId){
+    const el = document.getElementById('folder-tags-' + roleId);
+    const role = roles.find(r=>r.id===roleId);
+    if(el && role) el.innerHTML = folderTagsHTML(role);
+  }
+
+  function nextCandidate(){
+    if(deckIndex >= deck.length){
+      deck = buildCandidatePool();
+      deckIndex = 0;
+    }
+    currentCandidate = deck[deckIndex++];
+    fileCount++;
+    locked = false;
+    livesLeft = 3;
+    chancesNum.textContent = '3';
+
+    stampEl.classList.remove('show','match','miss');
+    fileNo.textContent = 'FILE #' + String(fileCount).padStart(3,'0');
+    candName.textContent = randomName();
+    candTags.innerHTML = currentCandidate.tags.map(t=>`<span class="tag">${t}</span>`).join('');
+  }
+
+  function pulse(el){
+    el.classList.remove('pulse');
+    // force reflow so the animation can restart
+    void el.offsetWidth;
+    el.classList.add('pulse');
+  }
+
+  function flashWrongFolder(roleId){
+    const btn = foldersEl.querySelector(`.folder-btn[data-role="${roleId}"]`);
+    if(!btn) return;
+    btn.classList.remove('wrong-flash');
+    void btn.offsetWidth;
+    btn.classList.add('wrong-flash');
+    setTimeout(()=> btn.classList.remove('wrong-flash'), 350);
+  }
+
+  function handleChoice(roleId){
+    if(locked || timeLeft <= 0) return;
+    const correct = roleId === currentCandidate.roleId;
+
+    if(correct){
+      locked = true;
+      stampEl.textContent = 'MATCHED';
+      stampEl.classList.add('show','match');
+      score++;
+      scoreNum.textContent = score;
+      correctNum.textContent = score;
+      pulse(correctNum);
+      const matchedRole = roles.find(r=>r.id===roleId);
+      if(matchedRole && matchedRole.revealed < matchedRole.tags.length){
+        matchedRole.revealed++;
+        refreshFolderTags(roleId);
+      }
+      liveRegion.textContent = 'Matched. Score ' + score + '.';
+      setTimeout(()=>{ if(timeLeft > 0) nextCandidate(); }, 420);
+      return;
+    }
+
+    // wrong guess
+    livesLeft--;
+    chancesNum.textContent = Math.max(livesLeft, 0);
+    pulse(chancesNum);
+    flashWrongFolder(roleId);
+
+    if(livesLeft <= 0){
+      locked = true;
+      stampEl.textContent = 'MISS';
+      stampEl.classList.add('show','miss');
+      liveRegion.textContent = 'Out of chances on this file.';
+      setTimeout(()=>{ if(timeLeft > 0) nextCandidate(); }, 420);
+    } else {
+      liveRegion.textContent = 'Miss. ' + livesLeft + ' chances left on this file.';
+    }
+  }
+
+  function startGame(){
+    score = 0;
+    livesLeft = 3;
+    fileCount = 0;
+    timeLeft = 60;
+    usedNames = [];
+    deck = buildCandidatePool();
+    deckIndex = 0;
+    roles.forEach(role=> role.revealed = 0);
+    scoreNum.textContent = '0';
+    chancesNum.textContent = '3';
+    correctNum.textContent = '0';
+    timeNum.textContent = '60';
+    timerFill.style.width = '100%';
+    timerFill.style.background = 'var(--amber)';
+
+    introScreen.style.display = 'none';
+    endScreen.style.display = 'none';
+    gameScreen.style.display = 'block';
+
+    renderFolders();
+    nextCandidate();
+
+    clearInterval(timerId);
+    timerId = setInterval(()=>{
+      timeLeft--;
+      timeNum.textContent = Math.max(timeLeft,0);
+      timerFill.style.width = Math.max((timeLeft/60)*100, 0) + '%';
+      if(timeLeft <= 15) timerFill.style.background = 'var(--stamp-red)';
+      if(timeLeft <= 0){
+        clearInterval(timerId);
+        endGame();
+      }
+    }, 1000);
+  }
+
+  function endGame(){
+    gameScreen.style.display = 'none';
+    endScreen.style.display = 'block';
+    endScoreEl.textContent = score;
+  }
+
+  startBtn.addEventListener('click', startGame);
+  replayBtn.addEventListener('click', startGame);
+})();
+</script>
+</body>
+</html>
