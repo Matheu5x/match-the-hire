@@ -386,7 +386,7 @@
 <div class="stage">
   <p class="eyebrow">Candidate Sorting Desk</p>
   <h1 class="title">Match the Hire</h1>
-  <p class="subtitle">Sixty seconds. Sort each candidate into the role their skills actually fit. Speed and accuracy both count.</p>
+  <p class="subtitle">Forty seconds. Sort each candidate into the role their skills actually fit. Speed and accuracy both count.</p>
 
   <div class="panel">
     <!-- INTRO -->
@@ -396,7 +396,7 @@
         <div><b>02</b> — Roles start unknown. Click a role to guess.</div>
         <div><b>03</b> — 3 chances per file. Wrong guesses reveal nothing and cost a chance, not points.</div>
         <div><b>04</b> — Correct guesses reveal a role's traits for good, and your Correct count climbs.</div>
-        <div><b>05</b> — Clear as many files as you can in 60 seconds.</div>
+        <div><b>05</b> — Clear as many files as you can in 40 seconds.</div>
       </div>
       <button class="cta" id="start-btn">Start Sorting</button>
     </div>
@@ -405,7 +405,7 @@
     <div id="game-screen">
       <div class="hud">
         <span>Score: <span class="score-num" id="score-num">0</span></span>
-        <span>Time: <span class="time-num" id="time-num">60</span>s</span>
+        <span>Time: <span class="time-num" id="time-num">40</span>s</span>
       </div>
       <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
 
@@ -490,13 +490,15 @@
     return pool;
   }
 
+  const GAME_SECONDS = 40;
+
   let deck = [];
   let deckIndex = 0;
   let usedNames = [];
   let score = 0;
   let livesLeft = 3;
   let fileCount = 0;
-  let timeLeft = 60;
+  let timeLeft = GAME_SECONDS;
   let timerId = null;
   let currentCandidate = null;
   let locked = false;
@@ -633,7 +635,7 @@
     score = 0;
     livesLeft = 3;
     fileCount = 0;
-    timeLeft = 60;
+    timeLeft = GAME_SECONDS;
     usedNames = [];
     deck = buildCandidatePool();
     deckIndex = 0;
@@ -641,7 +643,7 @@
     scoreNum.textContent = '0';
     chancesNum.textContent = '3';
     correctNum.textContent = '0';
-    timeNum.textContent = '60';
+    timeNum.textContent = GAME_SECONDS;
     timerFill.style.width = '100%';
     timerFill.style.background = 'var(--amber)';
 
@@ -656,8 +658,8 @@
     timerId = setInterval(()=>{
       timeLeft--;
       timeNum.textContent = Math.max(timeLeft,0);
-      timerFill.style.width = Math.max((timeLeft/60)*100, 0) + '%';
-      if(timeLeft <= 15) timerFill.style.background = 'var(--stamp-red)';
+      timerFill.style.width = Math.max((timeLeft/GAME_SECONDS)*100, 0) + '%';
+      if(timeLeft <= 10) timerFill.style.background = 'var(--stamp-red)';
       if(timeLeft <= 0){
         clearInterval(timerId);
         endGame();
